@@ -12,7 +12,7 @@ window.onload = function() {
 
     
     
-    game.preload('home.png','ok.wav','chara1.png','end.png', 'gameover.png', 'gun01.wav','jump.wav','retry_button.png', 'gameover.wav','start.png','kuma.png','Ball3.png','bigmonster1.gif','monster5.gif','bullet.png','boom10.png','fire01.mp3','goals.png','field.wav','explode.wav','clear.png','goal.png','bigmonster2.gif','monster3.gif','mori.png','mori2.png','Ball2.png','mori3.png','stone1.png','fish.png','stone2.png','seald.png','get.wav');
+    game.preload('home.png','ok.wav','chara1.png','end.png', 'gameover.png', 'gun01.wav','jump.wav','retry_button.png', 'gameover.wav','start.png','kuma.png','Ball3.png','bigmonster1.gif','monster5.gif','bullet.png','boom10.png','fire01.mp3','goals.png','field.wav','explode.wav','clear.png','goal.png','bigmonster2.gif','monster3.gif','mori.png','mori2.png','Ball2.png','mori3.png','stone1.png','fish.png','stone2.png','seald.png','get.wav','goalmusic.wav','chara7.png');
     game.onload = function() {
         var bgm=game.assets['field.wav'];
         
@@ -42,7 +42,7 @@ window.onload = function() {
 
 
 
-
+            /*タイトル表示*/
             var title = new Label('くまの日常');
             title.width=360;
             title.textAlign='center';
@@ -75,6 +75,7 @@ window.onload = function() {
             startImage.addEventListener(Event.TOUCH_START,function(){
                 game.replaceScene(GameScene());
                 game.assets['ok.wav'].clone().play();
+                game.assets['goalmusic.wav'].stop();
             });
             return scene;
             
@@ -87,6 +88,7 @@ window.onload = function() {
                 var groundline=250;
                 var scrollspeed=8;
                 bgm.play();
+
                
 
 
@@ -209,6 +211,16 @@ window.onload = function() {
                 var scoreLabel=new Label("");
                 scoreLabel.color='#fff';
                 scene.addChild(scoreLabel);
+
+                　　/*スコアラベルの表示*/
+                n=0;
+                var scoreLabel2=new Label("敵を倒した数:0");
+                scoreLabel2.color='#fff';
+                scoreLabel2.x=240;
+                scoreLabel2.y=0;
+                scene.addChild(scoreLabel2);
+
+               
 　　　　　　　　　　
 　　　　　　　　　　　/*クマのあたり判定素材*/
                 var kumahit=new Sprite(5,20)
@@ -232,6 +244,16 @@ window.onload = function() {
                 };
                 scene.addChild(stone);
 
+                　　/*石2の設定*/
+                var stone2=new Sprite(70,70);
+                stone2.image=game.assets['stone1.png'];
+                stone2.x=-2*stone2.width
+                stone2.y=groundline-stone2.height;
+                stone2.scaleX=1;
+                stone2.scaleY=1;
+       
+                scene.addChild(stone2);
+
                  /*ドラゴンの設定*/
                 var dragon=new Sprite(80,75);
                 dragon.image=game.assets['bigmonster1.gif'];
@@ -252,6 +274,30 @@ window.onload = function() {
                 });
                 
                 scene.addChild(dragon);
+
+                 /*戦士の設定*/
+                var senshi=new Sprite(28,30);
+                senshi.image=game.assets['chara7.png'];
+                senshi.scaleX=2;
+                senshi.scaleY=2;
+                senshi.x=-senshi.x-400;
+                senshi.y=groundline - senshi.height;
+                senshi.frame=0;
+                
+                senshi.animeWaitMax = 5;    
+                senshi.animeWaitCount = 0;
+                senshi.addEventListener('enterframe',function(){
+                if(this.animeWaitCount>this.animeWaitMax){
+                    this.animeWaitCount=0;
+                    this.frame++;
+                }else{
+                    this.animeWaitCount++;
+                }
+
+
+                });
+            
+                scene.addChild(senshi);
 　　　　　　　　　
 　　　　　　　　　　　/*モンスター１の設定*/
                 var monster1=new Sprite(80,74);
@@ -293,6 +339,7 @@ window.onload = function() {
                 
 
                 });
+          
                 scene.addChild(monster2);
 
 
@@ -336,19 +383,48 @@ window.onload = function() {
 
                 scene.addEventListener(Event.ENTER_FRAME,function(){
                     scroll +=scrollspeed;
-                    scrolla=5000-scroll;
+                    scrolla=6000-scroll;
                     
+
                     scoreLabel.text='家まで'+scrolla.toString()+'㍍';
+                    
                     /*石が現れる条件*/
                     if(scroll%1000===0){
                         stone.x=-stone.width;
+                            
+              
+                    }
+                    /*石２が現れる条件*/
+                     if(scroll%1200===0){
+                        stone2.x=360;
                        
+                    stone2.x -=scrollspeed;
+                     stone2.tl.moveTo(300, 50, 12, enchant.Easing.CUBIC_EASEOUT) 
+                           .moveTo(0, 200, 17, enchant.Easing.CUBIC_EASEIN); 
+
+
+                       
+                    }
+
+                    if(scroll%2===0){
+            
+                        stone2.rotate(-30);
+                            }
+                    /*石2とクマが当たったら*/
+                       if(stone2.x>-stone2.width-50){
+                        stone2.x -=scrollspeed;
+                        if(stone2.intersect(kumahit)){
+                            kumaDead();
+                            bgm.stop();
+                        }
+
                     }
 
                     /*４００スクロールごとに石の大きさ変化*/
                     if(scroll%400===0){
                          stone.scaleX=stone.scaleX+0.25;
                         stone.scaleY=stone.scaleY+0.25;
+                        
                     }
                     /*石の消える条件*/
                     if(scroll%1500===0){
@@ -387,13 +463,30 @@ window.onload = function() {
                             bgm.stop();
                     }
                     }
+
+                    /*戦士出現条件*/
+                    if(scroll%2400===0){
+                        senshi.x=360;
+                    }
+
+                    /*戦士とクマが当たったら*/
+                    if(senshi.x>-2*senshi.width){
+                        senshi.x -=scrollspeed;
+                        if(senshi.intersect(kumahit)){
+　　　　　　　　　　　　　　　　bgm.stop();
+                            kumaDead();
+                        }
+
+                    }
+
+
 　　　　　　　　　　　　/*飛行モンスター出現条件*/
 　　　　　　　　　　　　if(scroll%1000===0){
                        monster3.x=360;
 
                      }
                      /*飛行モンスターとクマが当たったら*/
-                    if(monster3.x>-monster1.width){
+                    if(monster3.x>-monster3.width){
                         monster3.x -=2*scrollspeed;
                         monster3.y=90;
                         if(monster3.intersect(kumahit)){
@@ -415,7 +508,7 @@ window.onload = function() {
                             seald.x=-10000;
 
 
-                       },3000);
+                       },3500);
 
 
                      }
@@ -429,7 +522,7 @@ window.onload = function() {
                      }
 
                      /*シャケ出現条件*/
-                    if(scroll%1600===0){
+                    if(scroll%1400===0){
                      　fish.x=360;
                     
                     }
@@ -439,7 +532,7 @@ window.onload = function() {
 
 
                      /*ドラゴンの出てくる条件*/
-                    if(scroll%840===0){
+                    if(scroll%880===0){
                         dragon.x=360;
                     }
 
@@ -453,7 +546,7 @@ window.onload = function() {
 
                     }
                     /*家が現れる条件*/
-                    if(scroll===4800){
+                    if(scroll===5800){
                         home.x=360;
 
                         }
@@ -464,7 +557,7 @@ window.onload = function() {
 
 
                     /*ゴールの条件*/
-                    if(scroll===5000){
+                    if(scroll===6000){
                         kumaGoal();
                     }
 
@@ -473,10 +566,11 @@ window.onload = function() {
                     /*弾がドラゴンと当たったときの反応*/
                     if(shoot.intersect(dragon)){
                         game.assets['explode.wav'].clone().play();
-
+                          n=n+1;
+                        scoreLabel2.text="敵を倒した数:"+n;
                         effect.x=dragon.x;
                         effect.y=dragon.y;
-                        dragon.tl.moveTo(1000,dragon.y,2);
+                        dragon.tl.moveTo(1200,dragon.y,2);
                         scene.addChild(effect);
                         shoot.x=-10000;
                         setTimeout(function(){
@@ -491,7 +585,9 @@ window.onload = function() {
                     /*バリアがドラゴンと当たったときの反応*/
                     if(seald.intersect(dragon)){
                         game.assets['explode.wav'].clone().play();
-
+                         n=n+1;
+                        scoreLabel2.text="敵を倒した数:"+n;
+                        
                         effect.x=dragon.x;
                         effect.y=dragon.y;
                         dragon.tl.moveTo(1000,dragon.y,2);
@@ -505,11 +601,50 @@ window.onload = function() {
                        
 
                     }
+
+                    /*弾が戦士と当たったときの反応*/
+                    if(shoot.intersect(senshi)){
+                        game.assets['explode.wav'].clone().play();
+                          n=n+1;
+                        scoreLabel2.text="敵を倒した数:"+n;
+                        effect.x=senshi.x;
+                        effect.y=senshi.y;
+                     
+                        scene.addChild(effect);
+                        senshi.tl.moveTo(1200,senshi.y,1.5)
+                        shoot.x=-20000;
+                        setTimeout(function(){
+                            scene.removeChild(effect);
+
+
+                       },150);
+                        
+
+                    }
+
+                    /*バリアが戦士と当たったときの反応*/
+                    if(seald.intersect(senshi)){
+                        senshi.tl.moveTo(1200,senshi.y,1.5);
+                        game.assets['explode.wav'].clone().play();
+                         n=n+1;
+                        scoreLabel2.text="敵を倒した数:"+n;
+
+                        effect.x=senshi.x;
+                        effect.y=senshi.y;
+                        scene.addChild(effect);
+                       
+                        setTimeout(function(){
+                            scene.removeChild(effect);
+                            
+                        },150);
+                    }
+
                     /*弾がモンスター１と当たったときの反応*/
                     if(shoot.intersect(monster1)){
-                        monster1.tl.moveTo(800,monster1.y,1.5);
+                        monster1.tl.moveTo(700,monster1.y,1.5);
                         game.assets['explode.wav'].clone().play();
-
+                          n=n+1;
+                        scoreLabel2.text="敵を倒した数:"+n;
                         effect.x=monster1.x;
                         effect.y=monster1.y;
                         scene.addChild(effect);
@@ -525,9 +660,10 @@ window.onload = function() {
 
                     /*バリアがモンスター１と当たったときの反応*/
                     if(seald.intersect(monster1)){
-                        monster1.tl.moveTo(800,monster1.y,1.5);
+                        monster1.tl.moveTo(1200,monster1.y,1.5);
                         game.assets['explode.wav'].clone().play();
-
+                        n=n+1;
+                        scoreLabel2.text="敵を倒した数:"+n;
                         effect.x=monster1.x;
                         effect.y=monster1.y;
                         scene.addChild(effect);
@@ -542,9 +678,10 @@ window.onload = function() {
                     }
                     /*弾がモンスター2と当たったときの反応*/
                     if(shoot.intersect(monster2)){
-                        monster2.tl.moveTo(600,monster2.y,1.5);
+                        monster2.tl.moveTo(900,monster2.y,1.5);
                         game.assets['explode.wav'].clone().play();
-
+　　　　　　　　　　　　　　 n=n+1;
+                        scoreLabel2.text="敵を倒した数:"+n;
                         effect.x=monster2.x;
                         effect.y=monster2.y;
                         scene.addChild(effect);
@@ -559,8 +696,10 @@ window.onload = function() {
                     }
                     /*バリアがモンスター2と当たったときの反応*/
                     if(seald.intersect(monster2)){
-                        monster2.tl.moveTo(600,monster2.y,1.5);
+                        monster2.tl.moveTo(1000,monster2.y,1.5);
                         game.assets['explode.wav'].clone().play();
+                         n=n+1;
+                        scoreLabel2.text="敵を倒した数:"+n;
 
                         effect.x=monster2.x;
                         effect.y=monster2.y;
@@ -580,6 +719,8 @@ window.onload = function() {
                     if(shoot.intersect(monster3)){
                         monster3.tl.moveTo(600,monster3.y,1.5);
                         game.assets['explode.wav'].clone().play();
+                         n=n+1;
+                        scoreLabel2.text="敵を倒した数:"+n;
 
                         effect.x=monster3.x;
                         effect.y=monster3.y;
@@ -593,10 +734,12 @@ window.onload = function() {
 
                        
                     }
-                    /*バリアが飛行モンスタ＝と当たったときの反応*/
+                    /*バリアが飛行モンスタ＝と当たったときの反応とスコアカウント*/
                     if(seald.intersect(monster3)){
                         monster3.tl.moveTo(600,monster3.y,1.5);
                         game.assets['explode.wav'].clone().play();
+                         n=n+1;
+                        scoreLabel2.text="敵を倒した数:"+n;
 
                         effect.x=monster3.x;
                         effect.y=monster3.y;
@@ -634,7 +777,7 @@ window.onload = function() {
                     if(scroll%2===0){
                         stone.rotate(8);
                     }
-                   
+                  
 
 
 
@@ -648,7 +791,8 @@ window.onload = function() {
             var creategoalScene=function(scroll){
                 var scene =new Scene();
                 scene.backgroundColor='#228b22'
-                game.assets['jump.wav'].clone().play();
+                game.assets['goalmusic.wav'].play();
+                bgm.stop();
 
 
                 var goal=new Sprite(320,225);
@@ -673,6 +817,30 @@ window.onload = function() {
                 endlabel.fontWeight='bolder';
                 scene.addChild(endlabel);
 
+                var info3=new Label('もう一回');
+                info3.width=360;
+                
+                info3.color='#fff';
+                info3.x=270;
+                info3.y=0;
+                info3.font='15px sans-serif';
+                info3.addEventListener(Event.TOUCH_END,function(){
+                    game.popScene();
+                    game.replaceScene(createStartScene());
+                    game.assets['ok.wav'].clone().play();
+                });
+
+                scene.addChild(info3);
+
+                 // スコア表示用ラベルの設定
+            var scoreLabel = new Label('倒した敵数:'+n.toString());                        
+            scoreLabel.width = 360;                                    
+            scoreLabel.color = '#ffffff';                              // 文字を白色に
+            scoreLabel.x = 0;                                          // 横位置調整
+            scoreLabel.y = 0;                                         // 縦位置調整
+            scoreLabel.font = '15px sans-serif';                       // 28pxのゴシック体にする
+            scene.addChild(scoreLabel);                                // シーンに追加
+
 
                 return scene;
 
@@ -682,7 +850,7 @@ window.onload = function() {
             var creategameoverScene=function(scroll){
                 var scene=new Scene();
                 game.assets['gameover.wav'].clone().play();
-
+                
 
 
                 var gameover=new Sprite(189,97);
